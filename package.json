@@ -1,0 +1,12 @@
+{
+  "name": "codebreach",
+  "version": "1.0.0",
+  "description": "CodeBreach — Full-Stack Multiplayer Social Deduction Collaborative Debugging Game",
+  "private": true,
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "start": "npm --prefix server start",
+    "build": "npm --prefix client run build"
+  }
+}
