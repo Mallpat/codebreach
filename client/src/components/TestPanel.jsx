@@ -86,11 +86,9 @@ export function TestPanel({ testResults = [], isTesting, onRunTests }) {
                       <span className={`font-semibold block truncate ${test.passed ? 'text-slate-300' : 'text-rose-200'}`}>
                         {test.testName}
                       </span>
-                      {test.ranBy && (
-                        <span className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
-                          <User className="w-3 h-3" /> Ran by: {test.ranBy}
-                        </span>
-                      )}
+                      <span className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                        <Terminal className="w-3 h-3 text-cyan-400" /> Automated Verification Run
+                      </span>
                     </div>
                   </div>
 

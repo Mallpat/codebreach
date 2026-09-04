@@ -209,18 +209,17 @@ io.on('connection', (socket) => {
     broadcastRoomState(room);
   });
 
-  // Collaborative code editing
+  // Collaborative code editing (100% anonymous & smooth)
   socket.on('code_change', ({ roomId, fileName, content }) => {
     const room = roomManager.getRoom(roomId);
     if (!room) return;
 
     room.updateFileContent(fileName, content, socket.data.playerId);
     
-    // Broadcast live code update to all other room members
+    // Broadcast live code update ONLY to all other room members, keeping edits anonymous
     socket.to(roomId).emit('code_updated', {
       fileName,
-      content,
-      editedBy: socket.data.playerId
+      content
     });
   });
 
@@ -231,12 +230,11 @@ io.on('connection', (socket) => {
 
     const playerId = socket.data.playerId;
     const player = room.players.find(p => p.id === playerId);
-    const ranByName = player ? player.name : 'Unknown Engineer';
 
-    console.log(`[Running Tests] Room ${roomId} triggered by ${ranByName}`);
+    console.log(`[Running Tests] Room ${roomId} triggered anonymously`);
 
-    // Notify room that tests are running
-    io.to(roomId).emit('test_run_started', { ranBy: ranByName });
+    // Notify room that tests are running anonymously
+    io.to(roomId).emit('test_run_started', { ranBy: 'Anonymous Teammate' });
 
     const primaryFile = room.codebase.files[0];
     const userCode = primaryFile ? primaryFile.content : '';

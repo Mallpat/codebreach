@@ -32,24 +32,75 @@ export function EditorScreen({
   const files = codebase?.files || [];
   const [activeFileName, setActiveFileName] = useState(files[0]?.name || 'auth.js');
   const [mobileTab, setMobileTab] = useState('editor'); // 'editor' | 'tests'
-  const [editingAlert, setEditingAlert] = useState(null);
+  const [anonymousEditAlert, setAnonymousEditAlert] = useState(false);
   const editorRef = useRef(null);
+  const debounceTimerRef = useRef(null);
+  const isTypingRef = useRef(false);
+  const prevActiveFileNameRef = useRef(activeFileName);
 
   const activeFile = files.find(f => f.name === activeFileName) || files[0];
 
-  // Watch for recent teammate edits
+  // Smoothly sync remote file updates into Monaco without cursor jumps or glitches
   useEffect(() => {
-    const recentEditor = players.find(p => p.id !== myId && p.lastEdit && (Date.now() - p.lastEdit.ts < 4000));
-    if (recentEditor) {
-      setEditingAlert(`${recentEditor.name} is editing ${recentEditor.lastEdit.file}...`);
-      const t = setTimeout(() => setEditingAlert(null), 3000);
-      return () => clearTimeout(t);
+    const editor = editorRef.current;
+    if (!editor || !activeFile) return;
+
+    const fileChanged = prevActiveFileNameRef.current !== activeFileName;
+    prevActiveFileNameRef.current = activeFileName;
+
+    const currentEditorText = editor.getValue();
+    const targetText = activeFile.content || '';
+
+    if (fileChanged) {
+      editor.setValue(targetText);
+      return;
     }
-  }, [players, myId]);
+
+    // Only update if remote content changed and is different from local buffer
+    if (currentEditorText !== targetText) {
+      const model = editor.getModel();
+      if (model) {
+        const pos = editor.getPosition();
+        const sel = editor.getSelections();
+
+        model.pushEditOperations(
+          [],
+          [{ range: model.getFullModelRange(), text: targetText }],
+          () => null
+        );
+
+        if (pos) editor.setPosition(pos);
+        if (sel) editor.setSelections(sel);
+
+        // Flash subtle anonymous update indicator
+        setAnonymousEditAlert(true);
+        const t = setTimeout(() => setAnonymousEditAlert(false), 2000);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [activeFile?.content, activeFileName]);
 
   const handleEditorChange = (value) => {
     if (!activeFile || activeFile.readOnly) return;
-    onCodeChange(activeFile.name, value || '');
+    isTypingRef.current = true;
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Debounce network emit by 120ms to prevent socket saturation & cursor rubberbanding
+    debounceTimerRef.current = setTimeout(() => {
+      onCodeChange(activeFile.name, value || '');
+      isTypingRef.current = false;
+    }, 120);
+  };
+
+  const handleRunTestsFlushed = () => {
+    if (debounceTimerRef.current && editorRef.current && activeFile) {
+      clearTimeout(debounceTimerRef.current);
+      onCodeChange(activeFile.name, editorRef.current.getValue() || '');
+    }
+    onRunTests();
   };
 
   const handleEditorDidMount = (editor, monaco) => {
@@ -57,7 +108,7 @@ export function EditorScreen({
 
     // Add keyboard shortcut Ctrl+Enter or Cmd+Enter to run tests
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      onRunTests();
+      handleRunTestsFlushed();
     });
   };
 
@@ -111,11 +162,11 @@ export function EditorScreen({
           </div>
         </div>
 
-        {/* Center: Live Edit Alert */}
-        {editingAlert && (
+        {/* Center: Live Anonymous Edit Alert */}
+        {anonymousEditAlert && (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono animate-pulse">
             <Sparkles className="w-3 h-3 text-cyan-400" />
-            <span>{editingAlert}</span>
+            <span>Anonymous codebase update synced</span>
           </div>
         )}
 
@@ -133,7 +184,7 @@ export function EditorScreen({
 
           {/* Run Tests Button */}
           <button
-            onClick={onRunTests}
+            onClick={handleRunTestsFlushed}
             disabled={isTesting}
             className={`px-4 py-1.5 rounded-xl font-mono font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md ${
               isTesting

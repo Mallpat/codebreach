@@ -461,8 +461,6 @@ export class GameState {
       summary,
       snippet: newContent.slice(0, 140)
     });
-
-    this._notifyChange();
   }
 
   setTestResults(results, ranByPlayerId) {
@@ -548,7 +546,7 @@ export class GameState {
         personality: p.personality,
         role: this.phase === 'end' ? p.role : undefined,
         isAlive: p.isAlive,
-        lastEdit: p.lastEdit
+        lastEdit: this.phase === 'end' ? p.lastEdit : undefined
       })),
       codebase: this.codebase,
       testResults: this.testResults,

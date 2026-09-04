@@ -40,14 +40,30 @@ export function useSocket() {
       setGameState(state);
     });
 
+    socket.on('code_updated', ({ fileName, content }) => {
+      setGameState(prev => {
+        if (!prev || !prev.codebase) return prev;
+        const updatedFiles = prev.codebase.files.map(f =>
+          f.name === fileName ? { ...f, content } : f
+        );
+        return {
+          ...prev,
+          codebase: {
+            ...prev.codebase,
+            files: updatedFiles
+          }
+        };
+      });
+    });
+
     socket.on('private_role', (data) => {
       setMyRole(data.role);
       if (data.playerId) setMyId(data.playerId);
     });
 
-    socket.on('test_run_started', ({ ranBy }) => {
+    socket.on('test_run_started', () => {
       setIsTesting(true);
-      setTestNotification(`Running tests triggered by ${ranBy}...`);
+      setTestNotification('Verification test suite executing...');
     });
 
     return () => {

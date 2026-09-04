@@ -127,14 +127,6 @@ export function VotingPanel({
                   )}
                 </div>
 
-                {/* Last commit / edit info */}
-                {player.lastEdit && (
-                  <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5 mb-3 bg-black/30 px-2.5 py-1.5 rounded-lg border border-slate-800/80">
-                    <FileCode className="w-3 h-3 text-cyan-400 shrink-0" />
-                    <span className="truncate">Last edit: {player.lastEdit.file}</span>
-                  </div>
-                )}
-
                 {/* Vote Action Button */}
                 {isAlive ? (
                   <button

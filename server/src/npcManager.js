@@ -157,22 +157,20 @@ export class NpcController {
     if (modified) {
       this.room.updateFileContent(file.name, content, actor.id);
 
-      // Broadcast live typing and code change
+      // Broadcast live code change anonymously
       this.io.to(this.room.roomId).emit('code_updated', {
         fileName: file.name,
-        content,
-        editedBy: actor.id,
-        editorName: actor.name
+        content
       });
 
-      // Optionally run tests after commit
+      // Optionally run tests after commit anonymously
       setTimeout(async () => {
         if (this.room.phase === 'work' || this.room.phase === 'deadline') {
           const { executeTests } = await import('./executor.js');
           const res = await executeTests({
             code: content,
             testCode: this.room.challenge.testCode,
-            ranBy: actor.name
+            ranBy: 'Anonymous Teammate'
           });
           this.room.setTestResults(res.results, actor.id);
         }
