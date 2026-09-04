@@ -2,7 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { sound } from '../utils/audio';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || (
+  typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:3001'
+    : 'https://codebreach.onrender.com'
+);
 
 export function useSocket() {
   const [connected, setConnected] = useState(false);
