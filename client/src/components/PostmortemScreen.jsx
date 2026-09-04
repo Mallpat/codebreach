@@ -64,12 +64,12 @@ export function PostmortemScreen({
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
       {/* Climax Hero Banner */}
-      <div className={`p-8 rounded-3xl border shadow-2xl text-center relative overflow-hidden ${
+      <div className={`p-8 sm:p-10 rounded-3xl shadow-2xl text-center relative overflow-hidden ${
         isEngineersWin
-          ? 'bg-gradient-to-b from-[#091b15] to-[#080d14] border-emerald-500/50 glow-emerald'
-          : 'bg-gradient-to-b from-[#1b0910] to-[#080d14] border-rose-500/50 glow-rose'
+          ? 'glass-panel-emerald glow-emerald'
+          : 'glass-panel-rose glow-rose'
       }`}>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono mb-3 uppercase tracking-wider bg-black/40 border border-white/10 text-slate-300">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono mb-4 uppercase tracking-wider bg-black/40 border border-white/15 text-slate-300 shadow-sm">
           <Clock className="w-3.5 h-3.5" /> OFFICIAL POSTMORTEM REPORT
         </div>
 
@@ -91,7 +91,7 @@ export function PostmortemScreen({
           {isEngineersWin ? 'ENGINEERS VICTORY — REPOSITORY SAVED' : 'SABOTEUR VICTORY — SYSTEM BREACHED'}
         </h1>
 
-        <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto font-light leading-relaxed">
+        <p className="text-base sm:text-lg text-slate-200 max-w-2xl mx-auto font-light leading-relaxed">
           {winReason || (isEngineersWin 
             ? 'All test assertions passed before the deadline expired.' 
             : 'The shift timer ran out with production bugs remaining unsolved.')}
@@ -109,7 +109,7 @@ export function PostmortemScreen({
       </div>
 
       {/* Grid: Role Reveal Dossier */}
-      <div className="glass-panel rounded-3xl p-6 border border-slate-800">
+      <div className="glass-panel rounded-3xl p-6">
         <h3 className="font-heading font-bold text-lg text-white mb-4 flex items-center gap-2">
           <User className="w-5 h-5 text-indigo-400" /> SQUAD DOSSIER (TRUE ROLES REVEALED)
         </h3>
@@ -120,14 +120,14 @@ export function PostmortemScreen({
             return (
               <div
                 key={p.id}
-                className={`p-5 rounded-2xl border text-center transition-all ${
+                className={`p-5 rounded-2xl text-center transition-all ${
                   isSab
-                    ? 'bg-rose-950/40 border-rose-500/70 shadow-lg shadow-rose-950/60 glow-rose'
-                    : 'bg-slate-900/60 border-slate-800'
+                    ? 'glass-card-interactive-rose border-rose-500 glow-rose'
+                    : 'glass-card-interactive'
                 }`}
               >
                 <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center font-mono font-bold text-xl mb-3 shadow-md ${
-                  isSab ? 'bg-rose-600 text-white' : p.isNpc ? 'bg-cyan-950 border border-cyan-500/50 text-cyan-300' : 'bg-slate-800 text-cyan-300'
+                  isSab ? 'bg-rose-600 text-white' : p.isNpc ? 'bg-cyan-950/80 border border-cyan-500/50 text-cyan-300' : 'bg-slate-800 text-cyan-300'
                 }`}>
                   {p.isNpc ? <Bot className="w-8 h-8 text-cyan-400" /> : p.name.slice(0, 2).toUpperCase()}
                 </div>
@@ -164,10 +164,10 @@ export function PostmortemScreen({
       </div>
 
       {/* Commit & Edit Timeline Audit */}
-      <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div className="glass-panel rounded-3xl p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <h3 className="font-heading font-bold text-lg text-white flex items-center gap-2">
-            <GitCommit className="w-5 h-5 text-cyan-400" /> COMMIT & CODE EDIT TIMELINE
+            <GitCommit className="w-5 h-5 text-cyan-400" /> COMMIT & CODE EDIT TIMELINE (AUDIT LOG)
           </h3>
           <span className="text-xs font-mono text-slate-400">
             {editTimeline.length} total modifications logged
@@ -185,16 +185,16 @@ export function PostmortemScreen({
               return (
                 <div
                   key={edit.id}
-                  className={`p-3.5 rounded-xl border font-mono text-xs transition-all ${
+                  className={`p-4 rounded-xl font-mono text-xs transition-all ${
                     isSaboteurEdit
-                      ? 'bg-rose-950/20 border-rose-500/40 shadow-sm'
-                      : 'bg-slate-900/60 border-slate-800'
+                      ? 'glass-card-interactive-rose border-rose-500/50 shadow-sm'
+                      : 'glass-card-interactive'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-200">{edit.playerName}</span>
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                      <span className="font-bold text-white text-sm">{edit.playerName}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
                         isSaboteurEdit
                           ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
                           : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
@@ -202,19 +202,19 @@ export function PostmortemScreen({
                         {isSaboteurEdit ? 'SABOTEUR' : 'ENGINEER'}
                       </span>
                       <span className="text-slate-400 flex items-center gap-1">
-                        <FileCode className="w-3 h-3 text-cyan-400" /> {edit.file}
+                        <FileCode className="w-3.5 h-3.5 text-cyan-400" /> {edit.file}
                       </span>
                     </div>
 
-                    <span className="text-slate-500 text-[10px]">
+                    <span className="text-slate-400 text-[11px]">
                       {formatTimeAgo(edit.timestamp)}
                     </span>
                   </div>
 
-                  <p className="text-slate-300 mb-2">{edit.summary}</p>
+                  <p className="text-slate-300 mb-2 font-sans text-xs">{edit.summary}</p>
 
                   {edit.snippet && (
-                    <div className="p-2 rounded bg-black/40 border border-slate-800/80 text-[10px] text-slate-400 truncate">
+                    <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 text-[11px] text-slate-300 truncate">
                       <code>{edit.snippet}</code>
                     </div>
                   )}
@@ -227,13 +227,13 @@ export function PostmortemScreen({
 
       {/* Standup Meeting History */}
       {standupHistory.length > 0 && (
-        <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-3">
+        <div className="glass-panel rounded-3xl p-6 space-y-3">
           <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-400" /> STANDUP ACCUSATION LOGS
           </h3>
           <div className="space-y-2">
             {standupHistory.map((item, idx) => (
-              <div key={idx} className="p-3 rounded-xl bg-slate-900/50 border border-slate-800 text-xs font-mono flex items-center justify-between">
+              <div key={idx} className="p-3.5 rounded-xl glass-card-interactive text-xs font-mono flex items-center justify-between">
                 <span>Meeting #{item.round}: Accused: <strong className="text-white">{item.accusedName}</strong></span>
                 {item.eliminated ? (
                   <span className="text-rose-400 font-bold">EJECTED (Was: {item.role})</span>

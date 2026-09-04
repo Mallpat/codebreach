@@ -128,20 +128,28 @@ export default function App() {
     const isHost = gameState.hostId === myId;
 
     return (
-      <div className="min-h-screen flex flex-col bg-[#08090e] text-slate-100">
-        <Navbar 
-          gameState={gameState} 
-          myRole={myRole} 
-          myPlayerName={myName} 
-        />
+      <div className="min-h-screen flex flex-col bg-[#07080e] text-slate-100 relative overflow-x-hidden">
+        {/* Ambient Background Energy Orbs for Glassmorphism */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-rose-600/12 blur-3xl animate-float-ambient" />
+          <div className="absolute top-1/2 -right-32 w-96 h-96 rounded-full bg-cyan-500/12 blur-3xl animate-pulse-glow" />
+          <div className="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full bg-indigo-600/12 blur-3xl" />
+        </div>
 
-        {/* Global Test Notification Banner */}
-        {testNotification && (
-          <div className="bg-cyan-950/80 border-b border-cyan-500/40 px-4 py-1.5 text-center text-xs font-mono text-cyan-300 flex items-center justify-center gap-2 animate-pulse">
-            <Radio className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{testNotification}</span>
-          </div>
-        )}
+        <div className="relative z-10 flex-1 flex flex-col">
+          <Navbar 
+            gameState={gameState} 
+            myRole={myRole} 
+            myPlayerName={myName} 
+          />
+
+          {/* Global Test Notification Banner */}
+          {testNotification && (
+            <div className="glass-panel border-b border-cyan-500/40 px-4 py-2 text-center text-xs font-mono text-cyan-300 flex items-center justify-center gap-2 animate-pulse glow-cyan">
+              <Radio className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{testNotification}</span>
+            </div>
+          )}
 
         <main className="flex-1 flex flex-col">
           {/* Phase 1: Lobby Screen */}
@@ -235,18 +243,19 @@ export default function App() {
             onClose={() => setShowRoleModal(false)}
           />
         )}
+        </div>
       </div>
     );
   }
 
   // Not in a room yet: Render High-Aesthetic Landing Page
   return (
-    <div className="min-h-screen bg-[#07080d] text-slate-100 flex flex-col justify-between selection:bg-rose-500/30 selection:text-rose-200">
+    <div className="min-h-screen bg-[#07080d] text-slate-100 flex flex-col justify-between selection:bg-rose-500/30 selection:text-rose-200 relative overflow-hidden">
       {/* Background Ambient Glows */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-rose-600/15 blur-3xl" />
-        <div className="absolute top-1/3 -right-40 w-96 h-96 rounded-full bg-indigo-600/15 blur-3xl" />
-        <div className="absolute -bottom-40 left-1/3 w-96 h-96 rounded-full bg-cyan-600/15 blur-3xl" />
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-40 -left-40 w-[30rem] h-[30rem] rounded-full bg-rose-600/20 blur-3xl animate-float-ambient" />
+        <div className="absolute top-1/3 -right-40 w-[30rem] h-[30rem] rounded-full bg-indigo-600/20 blur-3xl animate-pulse-glow" />
+        <div className="absolute -bottom-40 left-1/3 w-[30rem] h-[30rem] rounded-full bg-cyan-600/20 blur-3xl animate-float-ambient" />
       </div>
 
       {/* Landing Header */}
@@ -272,7 +281,7 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left: Narrative & Pitch (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono glow-rose">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono glow-rose">
               <Terminal className="w-3.5 h-3.5" />
               <span>THE REAL-TIME MULTIPLAYER SOCIAL DEDUCTION GAME</span>
             </div>
@@ -288,15 +297,15 @@ export default function App() {
 
             {/* Feature Pills */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 font-mono text-xs">
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
+              <div className="p-3.5 rounded-xl glass-card-interactive flex items-center gap-2.5">
                 <Code2 className="w-4 h-4 text-cyan-400 shrink-0" />
                 <span>Real Monaco IDE</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
+              <div className="p-3.5 rounded-xl glass-card-interactive flex items-center gap-2.5">
                 <Flame className="w-4 h-4 text-rose-400 shrink-0" />
                 <span>Live Test Suite</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
+              <div className="p-3.5 rounded-xl glass-card-interactive flex items-center gap-2.5">
                 <Users className="w-4 h-4 text-indigo-400 shrink-0" />
                 <span>Standup Voting</span>
               </div>
@@ -305,7 +314,7 @@ export default function App() {
 
           {/* Right: Join / Create Gateway Portal (5 cols) */}
           <div className="lg:col-span-5">
-            <div className="glass-panel-glow rounded-3xl p-8 border-cyan-500/30 shadow-2xl relative">
+            <div className="glass-panel-glow rounded-3xl p-8 border-cyan-500/40 shadow-2xl relative">
               <h2 className="font-heading font-black text-2xl text-white mb-2">
                 Developer Terminal
               </h2>
@@ -331,7 +340,7 @@ export default function App() {
                     onChange={(e) => setNameInput(e.target.value)}
                     placeholder="e.g. Alex (Staff Engineer)"
                     maxLength={24}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-700 font-mono text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors"
+                    className="w-full px-4 py-3 rounded-xl glass-input font-mono text-sm text-white focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -374,7 +383,7 @@ export default function App() {
                       onChange={(e) => setRoomInput(e.target.value.toUpperCase())}
                       placeholder="ROOM CODE"
                       maxLength={6}
-                      className="flex-1 px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-700 font-mono uppercase tracking-widest text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors"
+                      className="flex-1 px-4 py-3 rounded-xl glass-input font-mono uppercase tracking-widest text-sm text-white focus:outline-none transition-colors"
                     />
                     <button
                       onClick={handleJoinRoom}

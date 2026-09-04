@@ -13,11 +13,11 @@ export function RoleRevealModal({ role, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className={`relative max-w-lg w-full rounded-3xl p-8 border shadow-2xl overflow-hidden transition-all ${
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300">
+      <div className={`relative max-w-lg w-full rounded-3xl p-8 shadow-2xl overflow-hidden transition-all ${
         isSaboteur
-          ? 'bg-[#140a10] border-rose-500/60 shadow-rose-950/70 glow-rose'
-          : 'bg-[#09111c] border-cyan-500/60 shadow-cyan-950/70 glow-cyan'
+          ? 'glass-panel-rose border-rose-500/60 glow-rose'
+          : 'glass-panel-glow border-cyan-500/60 glow-cyan'
       }`}>
         {/* Ambient Top Glow */}
         <div className={`absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl opacity-30 pointer-events-none ${
@@ -25,14 +25,14 @@ export function RoleRevealModal({ role, onClose }) {
         }`} />
 
         <div className="relative z-10 text-center space-y-5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono tracking-widest uppercase border bg-black/40 border-white/10 text-slate-300">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono tracking-widest uppercase border bg-black/40 border-white/15 text-slate-300 shadow-sm">
             <Eye className="w-3.5 h-3.5 text-rose-400" /> CONFIDENTIAL PERSONNEL ASSIGNMENT
           </div>
 
           <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center border shadow-xl ${
             isSaboteur
-              ? 'bg-rose-950/60 border-rose-500 text-rose-400 shadow-rose-900/40'
-              : 'bg-cyan-950/60 border-cyan-500 text-cyan-400 shadow-cyan-900/40'
+              ? 'bg-rose-950/70 border-rose-500 text-rose-400 shadow-rose-900/40'
+              : 'bg-cyan-950/70 border-cyan-500 text-cyan-400 shadow-cyan-900/40'
           }`}>
             {isSaboteur ? (
               <Bug className="w-10 h-10 animate-bounce" />
@@ -42,7 +42,7 @@ export function RoleRevealModal({ role, onClose }) {
           </div>
 
           <div>
-            <span className="text-xs font-mono uppercase text-slate-400 tracking-wider">YOUR ROLE IN THIS SHIFT:</span>
+            <span className="text-xs font-mono uppercase text-slate-300 tracking-wider">YOUR ROLE IN THIS SHIFT:</span>
             <h2 className={`text-3xl sm:text-4xl font-black font-heading tracking-tight mt-1 ${
               isSaboteur ? 'text-rose-400' : 'text-cyan-400'
             }`}>
@@ -51,7 +51,7 @@ export function RoleRevealModal({ role, onClose }) {
           </div>
 
           {/* Role Briefing Box */}
-          <div className="p-4 rounded-2xl bg-black/40 border border-white/10 text-left space-y-3 font-mono text-xs">
+          <div className="p-5 rounded-2xl glass-panel text-left space-y-3 font-mono text-xs border-white/10">
             <div className="flex items-center gap-2 font-bold text-slate-200">
               <AlertOctagon className={`w-4 h-4 ${isSaboteur ? 'text-rose-400' : 'text-cyan-400'}`} />
               <span>PRIMARY DIRECTIVES:</span>

@@ -124,18 +124,18 @@ export function EditorScreen({
   return (
     <div className="flex flex-col h-[calc(100vh-62px)] bg-[#080a11] overflow-hidden">
       {/* Top Workspace Toolbar */}
-      <div className="bg-[#0e121d] border-b border-slate-800 px-4 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="glass-panel border-b border-white/10 px-4 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0 z-10">
         {/* File Tabs & Mobile Switcher */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-slate-950/80 p-0.5 rounded-xl border border-slate-800">
+          <div className="flex items-center glass-pill p-0.5 rounded-xl">
             {files.map((file) => (
               <button
                 key={file.name}
                 onClick={() => { setActiveFileName(file.name); sound.playClick(); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
                   activeFileName === file.name
-                    ? 'bg-slate-800 text-cyan-300 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
               >
                 <FileCode className={`w-3.5 h-3.5 ${activeFileName === file.name ? 'text-cyan-400' : 'text-slate-500'}`} />
@@ -146,7 +146,7 @@ export function EditorScreen({
           </div>
 
           {/* Mobile switcher */}
-          <div className="flex lg:hidden bg-slate-950/80 p-0.5 rounded-xl border border-slate-800 ml-2">
+          <div className="flex lg:hidden glass-pill p-0.5 rounded-xl ml-2">
             <button
               onClick={() => setMobileTab('editor')}
               className={`px-3 py-1 rounded-lg text-xs font-mono ${mobileTab === 'editor' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
@@ -175,7 +175,7 @@ export function EditorScreen({
           {/* Emergency Standup Call Button */}
           <button
             onClick={() => onCallStandup('Emergency discussion called by teammate')}
-            className="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 hover:border-rose-500 text-rose-300 text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            className="px-3 py-1.5 rounded-xl glass-card-interactive-rose border-rose-500/40 hover:border-rose-500 text-rose-300 text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
             title="Call an emergency standup discussion to vote out suspected saboteur"
           >
             <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
@@ -231,7 +231,7 @@ export function EditorScreen({
 
             {/* Read-only overlay badge */}
             {activeFile?.readOnly && (
-              <div className="absolute top-3 right-5 z-20 px-2.5 py-1 rounded-md bg-slate-900/90 border border-slate-700 text-slate-400 text-xs font-mono flex items-center gap-1.5">
+              <div className="absolute top-3 right-5 z-20 px-2.5 py-1 rounded-md glass-panel text-slate-400 text-xs font-mono flex items-center gap-1.5">
                 <Lock className="w-3 h-3 text-slate-400" />
                 <span>Test Suite (Reference Only)</span>
               </div>
@@ -239,19 +239,19 @@ export function EditorScreen({
           </div>
 
           {/* Bottom Editor Status Ribbon */}
-          <div className="h-9 bg-[#0b0e17] border-t border-slate-800 px-4 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
+          <div className="h-9 glass-panel border-t border-white/10 px-4 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-slate-300">
+              <span className="flex items-center gap-1.5 text-slate-200">
                 <FileCode className="w-3.5 h-3.5 text-cyan-400" /> {activeFile?.name}
               </span>
               <span className="hidden sm:inline text-slate-500">UTF-8 • JavaScript</span>
             </div>
 
             {/* Discreet Role Reminder */}
-            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold ${
+            <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
               isSaboteur
-                ? 'bg-rose-950/40 text-rose-300 border border-rose-500/30'
-                : 'bg-cyan-950/40 text-cyan-300 border border-cyan-500/30'
+                ? 'bg-rose-950/50 text-rose-300 border border-rose-500/40'
+                : 'bg-cyan-950/50 text-cyan-300 border border-cyan-500/40'
             }`}>
               {isSaboteur ? <Bug className="w-3 h-3 text-rose-400" /> : <Shield className="w-3 h-3 text-cyan-400" />}
               <span>{isSaboteur ? 'SABOTEUR (KEEP IT BROKEN)' : 'ENGINEER (FIX ALL TESTS)'}</span>

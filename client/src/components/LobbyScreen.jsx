@@ -96,10 +96,10 @@ export function LobbyScreen({
                 <button
                   type="button"
                   onClick={() => onSelectChallenge?.('auth')}
-                  className={`p-4 rounded-xl text-left border transition-all cursor-pointer ${
+                  className={`p-4 rounded-xl text-left transition-all cursor-pointer ${
                     challengeId === 'auth'
-                      ? 'bg-cyan-950/30 border-cyan-500 shadow-md shadow-cyan-950/50 glow-cyan'
-                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      ? 'glass-panel-glow border-cyan-500 glow-cyan'
+                      : 'glass-card-interactive hover:border-cyan-500/40'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -114,10 +114,10 @@ export function LobbyScreen({
                 <button
                   type="button"
                   onClick={() => onSelectChallenge?.('pipeline')}
-                  className={`p-4 rounded-xl text-left border transition-all cursor-pointer ${
+                  className={`p-4 rounded-xl text-left transition-all cursor-pointer ${
                     challengeId === 'pipeline'
-                      ? 'bg-rose-950/30 border-rose-500 shadow-md shadow-rose-950/50 glow-rose'
-                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      ? 'glass-panel-rose border-rose-500 glow-rose'
+                      : 'glass-card-interactive-rose hover:border-rose-500/40'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -145,8 +145,8 @@ export function LobbyScreen({
                     onClick={() => { setDuration(secs); sound.playClick(); }}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium border transition-all cursor-pointer ${
                       duration === secs
-                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-sm'
-                        : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-md shadow-indigo-950/60'
+                        : 'glass-card-interactive text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {Math.floor(secs / 60)}m
@@ -218,8 +218,8 @@ export function LobbyScreen({
           </div>
 
           {/* Join Another Room Form */}
-          <div className="glass-panel rounded-2xl p-5 border border-slate-800/80">
-            <h3 className="text-sm font-mono uppercase text-slate-400 mb-3 flex items-center gap-2">
+          <div className="glass-panel rounded-2xl p-5">
+            <h3 className="text-sm font-mono uppercase text-slate-300 mb-3 flex items-center gap-2">
               <Terminal className="w-4 h-4 text-indigo-400" /> Switch / Join Another Room
             </h3>
             <form onSubmit={handleJoinExisting} className="flex flex-col sm:flex-row gap-3">
@@ -229,12 +229,12 @@ export function LobbyScreen({
                 value={roomInput}
                 onChange={(e) => setRoomInput(e.target.value.toUpperCase())}
                 maxLength={6}
-                className="px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 font-mono uppercase tracking-wider text-sm text-white focus:outline-none focus:border-cyan-500"
+                className="px-4 py-2.5 rounded-xl glass-input font-mono uppercase tracking-wider text-sm text-white focus:outline-none focus:border-cyan-500"
               />
               <button
                 type="submit"
                 disabled={!roomInput.trim()}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-sm border border-slate-600 cursor-pointer disabled:opacity-50 transition-all"
+                className="px-5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white font-medium text-sm border border-slate-600/70 cursor-pointer disabled:opacity-50 transition-all shadow-sm"
               >
                 Join Room
               </button>
@@ -245,8 +245,8 @@ export function LobbyScreen({
         {/* Right Column: Player Manifest & Role Guide (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Active Roster */}
-          <div className="glass-panel rounded-2xl p-5 border border-slate-800/80">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+          <div className="glass-panel rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
               <h3 className="font-heading font-bold text-white flex items-center gap-2 text-base">
                 <Users className="w-4 h-4 text-cyan-400" /> Engineering Squad ({players.length}/6)
               </h3>
@@ -254,7 +254,7 @@ export function LobbyScreen({
                 {players.length < 6 && (
                   <button
                     onClick={onAddNpc}
-                    className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 text-[11px] font-mono flex items-center gap-1 cursor-pointer transition-colors"
+                    className="px-2 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 text-cyan-300 text-[11px] font-mono flex items-center gap-1 cursor-pointer transition-colors"
                     title="Add AI teammate"
                   >
                     <UserPlus className="w-3 h-3" />
@@ -275,18 +275,18 @@ export function LobbyScreen({
                 return (
                   <div
                     key={p.id || idx}
-                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl transition-all ${
                       isMe 
-                        ? 'bg-indigo-950/40 border-indigo-500/50 shadow-sm' 
+                        ? 'glass-card-interactive border-indigo-500/60 shadow-indigo-950/40' 
                         : isBot
-                        ? 'bg-slate-900/80 border-cyan-900/40'
-                        : 'bg-slate-900/60 border-slate-800/80'
+                        ? 'glass-card-interactive border-cyan-500/30'
+                        : 'glass-card-interactive'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-mono font-bold text-sm ${
                         isMe 
-                          ? 'bg-indigo-600 text-white' 
+                          ? 'bg-indigo-600 text-white shadow-sm' 
                           : isBot 
                           ? 'bg-cyan-950 border border-cyan-500/40 text-cyan-300'
                           : 'bg-slate-800 text-slate-300'
@@ -323,36 +323,36 @@ export function LobbyScreen({
           </div>
 
           {/* The Two Roles Graphic Card (As shown in user diagrams) */}
-          <div className="glass-panel rounded-2xl p-5 border border-slate-800/80 space-y-4">
+          <div className="glass-panel rounded-2xl p-5 space-y-4">
             <h3 className="font-heading font-bold text-sm uppercase tracking-wider text-slate-300 text-center">
               THE TWO ROLES (ASYMMETRIC DEDUCTION)
             </h3>
 
             <div className="grid grid-cols-2 gap-3">
               {/* Engineer Card */}
-              <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-2 text-center">
-                <div className="w-10 h-10 mx-auto rounded-full bg-blue-600/30 border border-blue-500/50 flex items-center justify-center">
+              <div className="p-3.5 rounded-xl glass-card-interactive border-blue-500/40 space-y-2 text-center">
+                <div className="w-10 h-10 mx-auto rounded-full bg-blue-600/25 border border-blue-500/50 flex items-center justify-center">
                   <Shield className="w-5 h-5 text-blue-400" />
                 </div>
                 <h4 className="font-heading font-bold text-sm text-blue-300">Engineer</h4>
                 <p className="text-[11px] text-slate-400 leading-tight">
                   Genuinely fixing the codebase and racing the test suite.
                 </p>
-                <div className="pt-2 border-t border-blue-900/50 text-[10px] text-blue-300/80 font-mono">
+                <div className="pt-2 border-t border-white/10 text-[10px] text-blue-300/80 font-mono">
                   Wins: All tests pass, OR Saboteur voted out in time.
                 </div>
               </div>
 
               {/* Saboteur Card */}
-              <div className="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/30 space-y-2 text-center">
-                <div className="w-10 h-10 mx-auto rounded-full bg-rose-600/30 border border-rose-500/50 flex items-center justify-center">
+              <div className="p-3.5 rounded-xl glass-card-interactive-rose border-rose-500/40 space-y-2 text-center">
+                <div className="w-10 h-10 mx-auto rounded-full bg-rose-600/25 border border-rose-500/50 flex items-center justify-center">
                   <Bug className="w-5 h-5 text-rose-400" />
                 </div>
                 <h4 className="font-heading font-bold text-sm text-rose-300">Saboteur</h4>
                 <p className="text-[11px] text-slate-400 leading-tight">
                   Secretly keeps code broken while pretending to help.
                 </p>
-                <div className="pt-2 border-t border-rose-900/50 text-[10px] text-rose-300/80 font-mono">
+                <div className="pt-2 border-t border-white/10 text-[10px] text-rose-300/80 font-mono">
                   Wins: Timer ends with tests failing & never caught.
                 </div>
               </div>
