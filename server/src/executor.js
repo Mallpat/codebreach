@@ -11,7 +11,7 @@ import axios from 'axios';
  *   ranBy: string
  * }
  */
-export async function executeTests({ code, testCode, ranBy = 'Anonymous', timeoutMs = 4000 }) {
+export async function executeTests({ code, testCode, ranBy = 'Anonymous', timeoutMs = 1200 }) {
   // If external Piston runner is configured via environment
   if (process.env.PISTON_URL) {
     try {

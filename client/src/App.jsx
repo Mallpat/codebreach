@@ -30,6 +30,8 @@ export default function App() {
     myName,
     isTesting,
     testNotification,
+    lastCommit,
+    lastTestRun,
     createRoom,
     joinRoom,
     quickMatch,
@@ -143,11 +145,32 @@ export default function App() {
             myPlayerName={myName} 
           />
 
-          {/* Global Test Notification Banner */}
+          {/* Global Test / Commit Activity Banner */}
           {testNotification && (
             <div className="glass-panel border-b border-cyan-500/40 px-4 py-2 text-center text-xs font-mono text-cyan-300 flex items-center justify-center gap-2 animate-pulse glow-cyan">
               <Radio className="w-3.5 h-3.5 text-cyan-400" />
               <span>{testNotification}</span>
+            </div>
+          )}
+
+          {/* Last Commit Activity Bar — shown when tests completed */}
+          {!testNotification && lastTestRun && (
+            <div className={`px-4 py-1.5 text-center text-[11px] font-mono flex items-center justify-center gap-2 border-b ${
+              lastTestRun.allPassed
+                ? 'bg-emerald-950/50 border-emerald-500/30 text-emerald-300'
+                : 'bg-rose-950/50 border-rose-500/30 text-rose-300'
+            }`}>
+              <span className="opacity-60">⏱ Last commit by</span>
+              <span className="font-bold text-white">{lastTestRun.ranBy}</span>
+              <span className="opacity-60">on</span>
+              <span className="text-cyan-300 font-mono">{lastTestRun.fileName}</span>
+              <span className="opacity-60">—</span>
+              <span className={`font-bold ${
+                lastTestRun.allPassed ? 'text-emerald-400' : 'text-rose-400'
+              }`}>
+                {lastTestRun.passedCount}/{lastTestRun.totalCount} passing
+                {lastTestRun.allPassed ? ' ✅' : ' ❌'}
+              </span>
             </div>
           )}
 
@@ -192,6 +215,9 @@ export default function App() {
               myId={myId}
               phase={gameState.phase}
               isTesting={isTesting}
+              lastCommit={lastCommit}
+              lastTestRun={lastTestRun}
+              editTimeline={gameState.editTimeline || []}
             />
           )}
 
@@ -211,6 +237,9 @@ export default function App() {
                 myId={myId}
                 phase={gameState.phase}
                 isTesting={isTesting}
+                lastCommit={lastCommit}
+                lastTestRun={lastTestRun}
+                editTimeline={gameState.editTimeline || []}
               />
               <VotingPanel
                 players={gameState.players}

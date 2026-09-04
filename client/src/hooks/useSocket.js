@@ -16,7 +16,10 @@ export function useSocket() {
   const [myName, setMyName] = useState(localStorage.getItem('codebreach_name') || '');
   const [isTesting, setIsTesting] = useState(false);
   const [testNotification, setTestNotification] = useState(null);
+  const [lastCommit, setLastCommit] = useState(null);   // { committedBy, fileName, timestamp }
+  const [lastTestRun, setLastTestRun] = useState(null); // { ranBy, passedCount, totalCount, allPassed, timestamp }
   const socketRef = useRef(null);
+  const isTestingTimerRef = useRef(null);
 
   useEffect(() => {
     const socket = io(SERVER_URL, {
@@ -61,9 +64,25 @@ export function useSocket() {
       if (data.playerId) setMyId(data.playerId);
     });
 
-    socket.on('test_run_started', () => {
+    socket.on('test_run_started', ({ ranBy, fileName, timestamp } = {}) => {
       setIsTesting(true);
-      setTestNotification('Verification test suite executing...');
+      setTestNotification(`🔄 ${ranBy || 'A Teammate'} is running tests on ${fileName || 'the codebase'}...`);
+      // Safety fallback: clear after 8s max in case the callback never fires
+      if (isTestingTimerRef.current) clearTimeout(isTestingTimerRef.current);
+      isTestingTimerRef.current = setTimeout(() => {
+        setIsTesting(false);
+        isTestingTimerRef.current = null;
+      }, 8000);
+    });
+
+    // code_committed: someone ran tests and their code is now live — show who
+    socket.on('code_committed', ({ committedBy, fileName, timestamp }) => {
+      setLastCommit({ committedBy, fileName, timestamp });
+    });
+
+    // test_run_complete: results are in — show who ran and what the outcome was
+    socket.on('test_run_complete', ({ ranBy, passedCount, totalCount, allPassed, fileName, timestamp }) => {
+      setLastTestRun({ ranBy, passedCount, totalCount, allPassed, fileName, timestamp });
     });
 
     return () => {
@@ -71,11 +90,34 @@ export function useSocket() {
     };
   }, []);
 
-  // Update testing state when testResults update
+  const prevPassingCountRef = useRef(null);
+
+  // Clear isTesting IMMEDIATELY when real results arrive — don't wait for any timer
   useEffect(() => {
-    if (gameState?.testResults) {
+    if (gameState?.testResults && gameState.testResults.length > 0) {
+      // Cancel the safety fallback timer — results are here
+      if (isTestingTimerRef.current) {
+        clearTimeout(isTestingTimerRef.current);
+        isTestingTimerRef.current = null;
+      }
       setIsTesting(false);
       setTestNotification(null);
+
+      const total = gameState.testResults.length;
+      const passing = gameState.testResults.filter(t => t.passed).length;
+
+      if (prevPassingCountRef.current !== null && total > 0) {
+        if (passing < prevPassingCountRef.current) {
+          sound.playAlarm();
+          setTestNotification(`⚠️ REGRESSION: ${total - passing} test${total - passing > 1 ? 's' : ''} failing! Saboteur active!`);
+          setTimeout(() => setTestNotification(null), 5000);
+        } else if (passing > prevPassingCountRef.current) {
+          sound.playTestPass();
+          setTestNotification(`✅ FIXED: ${passing} / ${total} tests passing!`);
+          setTimeout(() => setTestNotification(null), 3000);
+        }
+      }
+      prevPassingCountRef.current = passing;
     }
   }, [gameState?.testResults]);
 
@@ -131,11 +173,16 @@ export function useSocket() {
     }
   }, [gameState?.roomId]);
 
-  const runTests = useCallback(() => {
+  const runTests = useCallback((fileName, code) => {
     if (socketRef.current && gameState?.roomId) {
       setIsTesting(true);
       sound.playClick();
-      socketRef.current.emit('run_tests', { roomId: gameState.roomId }, (res) => {
+      socketRef.current.emit('run_tests', { roomId: gameState.roomId, fileName, code }, (res) => {
+        // Cancel fallback timer — server has responded
+        if (isTestingTimerRef.current) {
+          clearTimeout(isTestingTimerRef.current);
+          isTestingTimerRef.current = null;
+        }
         setIsTesting(false);
         if (res?.success) {
           const allPassed = res.results?.allPassed;
@@ -201,6 +248,8 @@ export function useSocket() {
     myName,
     isTesting,
     testNotification,
+    lastCommit,
+    lastTestRun,
     socket: socketRef.current,
     createRoom,
     joinRoom,

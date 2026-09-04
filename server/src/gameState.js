@@ -2,6 +2,43 @@ import { getChallenge } from './challenges/index.js';
 import { assignRoles } from './roleAssigner.js';
 import { NPC_POOL, NpcController } from './npcManager.js';
 
+function computeLineDiff(prevContent = '', newContent = '') {
+  if (prevContent === newContent) {
+    return { addedCount: 0, removedCount: 0, changes: [] };
+  }
+  const prevLines = (prevContent || '').split('\n');
+  const newLines = (newContent || '').split('\n');
+
+  const prevTrimmed = new Set(prevLines.map(l => l.trim()));
+  const newTrimmed = new Set(newLines.map(l => l.trim()));
+
+  const changes = [];
+  let addedCount = 0;
+  let removedCount = 0;
+
+  for (let i = 0; i < newLines.length; i++) {
+    const line = newLines[i];
+    if (line.trim() && !prevTrimmed.has(line.trim())) {
+      addedCount++;
+      if (changes.length < 12) {
+        changes.push({ type: 'add', lineNum: i + 1, text: line.slice(0, 120) });
+      }
+    }
+  }
+
+  for (let i = 0; i < prevLines.length; i++) {
+    const line = prevLines[i];
+    if (line.trim() && !newTrimmed.has(line.trim())) {
+      removedCount++;
+      if (changes.length < 16) {
+        changes.push({ type: 'del', lineNum: i + 1, text: line.slice(0, 120) });
+      }
+    }
+  }
+
+  return { addedCount, removedCount, changes };
+}
+
 export class RoomManager {
   constructor() {
     /** @type {Map<string, GameState>} */
@@ -444,11 +481,22 @@ export class GameState {
       ts: now
     };
 
-    // Log to edit timeline
+    // Calculate diff and summary
+    const diff = computeLineDiff(prevContent, newContent);
     const lineDiff = (newContent.split('\n').length) - (prevContent.split('\n').length);
-    const summary = lineDiff >= 0 
-      ? `Modified ${fileName} (+${lineDiff} lines)`
-      : `Modified ${fileName} (${lineDiff} lines)`;
+
+    let summary = '';
+    if (prevContent === newContent) {
+      summary = `Verified ${fileName} (No code modifications)`;
+    } else if (diff.addedCount > 0 && diff.removedCount > 0) {
+      summary = `Updated ${fileName} (+${diff.addedCount} / -${diff.removedCount} lines)`;
+    } else if (diff.addedCount > 0) {
+      summary = `Added ${diff.addedCount} line${diff.addedCount > 1 ? 's' : ''} to ${fileName}`;
+    } else if (diff.removedCount > 0) {
+      summary = `Removed ${diff.removedCount} line${diff.removedCount > 1 ? 's' : ''} from ${fileName}`;
+    } else {
+      summary = lineDiff >= 0 ? `Modified ${fileName} (+${lineDiff} lines)` : `Modified ${fileName} (${lineDiff} lines)`;
+    }
 
     this.editTimeline.push({
       id: `edit-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -459,7 +507,10 @@ export class GameState {
       file: fileName,
       timestamp: now,
       summary,
-      snippet: newContent.slice(0, 140)
+      addedCount: diff.addedCount,
+      removedCount: diff.removedCount,
+      changes: diff.changes,
+      snippet: newContent.slice(0, 160)
     });
   }
 
@@ -467,6 +518,23 @@ export class GameState {
     this.testResults = results;
     const ranByPlayer = this.players.find(p => p.id === ranByPlayerId);
     const ranByName = ranByPlayer ? ranByPlayer.name : 'Teammate';
+
+    const passedCount = Array.isArray(results) ? results.filter(r => r.passed).length : 0;
+    const totalCount = Array.isArray(results) ? results.length : 0;
+    const allPassed = totalCount > 0 && passedCount === totalCount;
+
+    // Attach latest test results to the most recent timeline edit
+    if (this.editTimeline && this.editTimeline.length > 0) {
+      const lastEntry = this.editTimeline[this.editTimeline.length - 1];
+      if (lastEntry) {
+        lastEntry.testRun = {
+          passedCount,
+          totalCount,
+          allPassed,
+          ranByName
+        };
+      }
+    }
 
     // Check win condition: All tests pass
     if (results.length > 0 && results.every(r => r.passed)) {

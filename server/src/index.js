@@ -224,31 +224,84 @@ io.on('connection', (socket) => {
   });
 
   // Run test suite
-  socket.on('run_tests', async ({ roomId }, callback) => {
+  socket.on('run_tests', async ({ roomId, fileName, code }, callback) => {
     const room = roomManager.getRoom(roomId);
-    if (!room) return;
+    if (!room) {
+      if (typeof callback === 'function') callback({ success: false, error: 'Room not found' });
+      return;
+    }
 
     const playerId = socket.data.playerId;
     const player = room.players.find(p => p.id === playerId);
+    const playerName = player ? player.name : 'A Teammate';
 
-    console.log(`[Running Tests] Room ${roomId} triggered anonymously`);
+    console.log(`[Running Tests] Room ${roomId} triggered by ${playerName}`);
 
-    // Notify room that tests are running anonymously
-    io.to(roomId).emit('test_run_started', { ranBy: 'Anonymous Teammate' });
+    // If code was provided with this test run, update the codebase and broadcast to the team
+    const targetFileName = fileName ||
+      (room.codebase.files.find(f => !f.readOnly)?.name) ||
+      (room.codebase.files[0]?.name) ||
+      'auth.js';
 
-    const primaryFile = room.codebase.files[0];
-    const userCode = primaryFile ? primaryFile.content : '';
+    let userCode = code;
+
+    if (userCode !== undefined && userCode !== null && targetFileName) {
+      room.updateFileContent(targetFileName, userCode, playerId);
+      // Synchronize the newly tested code to all teammates in the room
+      io.to(roomId).emit('code_updated', {
+        fileName: targetFileName,
+        content: userCode
+      });
+    } else {
+      const primaryFile = room.codebase.files.find(f => f.name === targetFileName) ||
+        room.codebase.files.find(f => !f.readOnly) ||
+        room.codebase.files[0];
+      userCode = primaryFile ? primaryFile.content : '';
+    }
+
     const testCode = room.challenge.testCode;
+
+    // Notify ALL room members: who is running tests, on which file
+    io.to(roomId).emit('test_run_started', {
+      ranBy: playerName,
+      playerId,
+      fileName: targetFileName,
+      timestamp: Date.now()
+    });
+
+    // Broadcast the new code to all teammates immediately so they see the update
+    if (userCode !== undefined && userCode !== null) {
+      io.to(roomId).emit('code_committed', {
+        fileName: targetFileName,
+        content: userCode,
+        committedBy: playerName,
+        playerId,
+        timestamp: Date.now()
+      });
+    }
 
     try {
       const execResult = await executeTests({
         code: userCode,
         testCode,
-        ranBy: ranByName
+        ranBy: 'Anonymous Teammate'
       });
 
       room.setTestResults(execResult.results, playerId);
       broadcastRoomState(room);
+
+      // Notify room of who ran tests and the outcome
+      const passed = execResult.passedCount;
+      const total = execResult.totalCount;
+      io.to(roomId).emit('test_run_complete', {
+        ranBy: playerName,
+        playerId,
+        fileName: targetFileName,
+        passedCount: passed,
+        totalCount: total,
+        allPassed: execResult.allPassed,
+        timestamp: Date.now()
+      });
 
       if (typeof callback === 'function') {
         callback({ success: true, results: execResult });
@@ -260,11 +313,20 @@ io.on('connection', (socket) => {
           testName: 'Execution Suite Error',
           passed: false,
           output: err.message || 'Fatal execution error',
-          ranBy: ranByName
+          ranBy: playerName
         }
       ];
       room.setTestResults(errorResult, playerId);
       broadcastRoomState(room);
+      io.to(roomId).emit('test_run_complete', {
+        ranBy: playerName,
+        playerId,
+        fileName: targetFileName,
+        passedCount: 0,
+        totalCount: 1,
+        allPassed: false,
+        timestamp: Date.now()
+      });
       if (typeof callback === 'function') {
         callback({ success: false, error: err.message });
       }

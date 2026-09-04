@@ -27,20 +27,25 @@ export function EditorScreen({
   players = [],
   myId,
   phase,
-  isTesting
+  isTesting,
+  lastCommit,
+  lastTestRun,
+  editTimeline = []
 }) {
   const files = codebase?.files || [];
   const [activeFileName, setActiveFileName] = useState(files[0]?.name || 'auth.js');
   const [mobileTab, setMobileTab] = useState('editor'); // 'editor' | 'tests'
   const [anonymousEditAlert, setAnonymousEditAlert] = useState(false);
   const editorRef = useRef(null);
-  const debounceTimerRef = useRef(null);
-  const isTypingRef = useRef(false);
   const prevActiveFileNameRef = useRef(activeFileName);
+  // Track what we last submitted so we can detect genuinely external changes
+  const lastSubmittedCodeRef = useRef({});
+  // Track last known remote content per file to detect external updates
+  const lastRemoteContentRef = useRef({});
 
   const activeFile = files.find(f => f.name === activeFileName) || files[0];
 
-  // Smoothly sync remote file updates into Monaco without cursor jumps or glitches
+  // When the active file changes, always load that file's content into the editor
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor || !activeFile) return;
@@ -48,63 +53,82 @@ export function EditorScreen({
     const fileChanged = prevActiveFileNameRef.current !== activeFileName;
     prevActiveFileNameRef.current = activeFileName;
 
-    const currentEditorText = editor.getValue();
-    const targetText = activeFile.content || '';
-
     if (fileChanged) {
-      editor.setValue(targetText);
+      // Switching files: load content unconditionally
+      editor.setValue(activeFile.content || '');
+      lastRemoteContentRef.current[activeFileName] = activeFile.content || '';
       return;
     }
 
-    // Only update if remote content changed and is different from local buffer
-    if (currentEditorText !== targetText) {
-      const model = editor.getModel();
-      if (model) {
-        const pos = editor.getPosition();
-        const sel = editor.getSelections();
+    // Same file: only apply remote update if it came from an EXTERNAL source
+    // i.e. it differs from what we last submitted AND differs from last known remote
+    const incomingRemote = activeFile.content || '';
+    const lastRemote = lastRemoteContentRef.current[activeFileName];
+    const lastSubmitted = lastSubmittedCodeRef.current[activeFileName];
 
-        model.pushEditOperations(
-          [],
-          [{ range: model.getFullModelRange(), text: targetText }],
-          () => null
-        );
+    // If remote content changed vs what we knew before (teammate or NPC edit)
+    if (incomingRemote !== lastRemote) {
+      lastRemoteContentRef.current[activeFileName] = incomingRemote;
 
-        if (pos) editor.setPosition(pos);
-        if (sel) editor.setSelections(sel);
+      // Only overwrite editor if the new content is NOT what we ourselves submitted
+      if (incomingRemote !== lastSubmitted) {
+        const model = editor.getModel();
+        if (model) {
+          const pos = editor.getPosition();
+          const sel = editor.getSelections();
+          model.pushEditOperations(
+            [],
+            [{ range: model.getFullModelRange(), text: incomingRemote }],
+            () => null
+          );
+          if (pos) editor.setPosition(pos);
+          if (sel) editor.setSelections(sel);
 
-        // Flash subtle anonymous update indicator
-        setAnonymousEditAlert(true);
-        const t = setTimeout(() => setAnonymousEditAlert(false), 2000);
-        return () => clearTimeout(t);
+          // Flash subtle anonymous update indicator
+          setAnonymousEditAlert(true);
+          const t = setTimeout(() => setAnonymousEditAlert(false), 2500);
+          return () => clearTimeout(t);
+        }
       }
     }
   }, [activeFile?.content, activeFileName]);
 
-  const handleEditorChange = (value) => {
-    if (!activeFile || activeFile.readOnly) return;
-    isTypingRef.current = true;
-
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+  // Seed initial remote ref on first mount / file load
+  useEffect(() => {
+    if (activeFile) {
+      const fn = activeFile.name;
+      if (lastRemoteContentRef.current[fn] === undefined) {
+        lastRemoteContentRef.current[fn] = activeFile.content || '';
+      }
     }
+  }, [activeFile?.name]);
 
-    // Debounce network emit by 120ms to prevent socket saturation & cursor rubberbanding
-    debounceTimerRef.current = setTimeout(() => {
-      onCodeChange(activeFile.name, value || '');
-      isTypingRef.current = false;
-    }, 120);
+  const handleEditorChange = (value) => {
+    // value is provided by Monaco — no need to read from ref here
+    // We intentionally do NOT broadcast keystroke-level changes (private edits)
   };
 
   const handleRunTestsFlushed = () => {
-    if (debounceTimerRef.current && editorRef.current && activeFile) {
-      clearTimeout(debounceTimerRef.current);
-      onCodeChange(activeFile.name, editorRef.current.getValue() || '');
+    if (isTesting) return;
+    const editor = editorRef.current;
+    const currentCode = editor ? editor.getValue() : (activeFile?.content || '');
+    const fileName = activeFile?.name;
+    // Record what we just submitted so remote sync won't wipe our code
+    if (fileName) {
+      lastSubmittedCodeRef.current[fileName] = currentCode;
+      lastRemoteContentRef.current[fileName] = currentCode;
     }
-    onRunTests();
+    // Submit current editor code to server → run tests → sync to teammates
+    onRunTests(fileName, currentCode);
   };
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
+
+    // Seed initial content tracking for the first file
+    if (activeFile) {
+      lastRemoteContentRef.current[activeFile.name] = activeFile.content || '';
+    }
 
     // Add keyboard shortcut Ctrl+Enter or Cmd+Enter to run tests
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
@@ -172,6 +196,24 @@ export function EditorScreen({
 
         {/* Right Action Buttons */}
         <div className="flex items-center gap-2.5">
+
+          {/* Live: Last Committed By indicator */}
+          {lastTestRun && !isTesting && (
+            <div className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono border ${
+              lastTestRun.allPassed
+                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+            }`}>
+              <span className="text-slate-400">Last push:</span>
+              <span className="font-bold text-white">{lastTestRun.ranBy}</span>
+              <span className={`font-bold ${
+                lastTestRun.allPassed ? 'text-emerald-400' : 'text-rose-400'
+              }`}>
+                {lastTestRun.passedCount}/{lastTestRun.totalCount}
+                {lastTestRun.allPassed ? ' ✓' : ' ✗'}
+              </span>
+            </div>
+          )}
           {/* Emergency Standup Call Button */}
           <button
             onClick={() => onCallStandup('Emergency discussion called by teammate')}
@@ -209,7 +251,7 @@ export function EditorScreen({
                 height="100%"
                 language="javascript"
                 theme="vs-dark"
-                value={activeFile.content || ''}
+                defaultValue={activeFile.content || ''}
                 onChange={handleEditorChange}
                 onMount={handleEditorDidMount}
                 options={{
@@ -264,7 +306,11 @@ export function EditorScreen({
           <TestPanel
             testResults={testResults}
             isTesting={isTesting}
-            onRunTests={onRunTests}
+            onRunTests={handleRunTestsFlushed}
+            editTimeline={editTimeline}
+            players={players}
+            lastCommit={lastCommit}
+            lastTestRun={lastTestRun}
           />
         </div>
       </div>
