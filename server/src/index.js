@@ -57,7 +57,7 @@ function broadcastRoomState(room) {
 io.on('connection', (socket) => {
   console.log(`[Socket Connected] ID: ${socket.id}`);
 
-  // Create a new room
+  // Create a new room with 15s NPC auto-fill timer
   socket.on('create_room', ({ name, challengeId = 'auth', durationSeconds = 480 }, callback) => {
     try {
       const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
         socketId: socket.id
       };
 
-      const room = roomManager.createRoom(roomId, hostPlayer, challengeId);
+      const room = roomManager.createRoom(roomId, hostPlayer, challengeId, io);
       socket.join(roomId);
       socket.data.roomId = roomId;
       socket.data.playerId = playerId;
@@ -87,6 +87,58 @@ io.on('connection', (socket) => {
       broadcastRoomState(room);
     } catch (err) {
       console.error('[create_room error]', err);
+      if (typeof callback === 'function') {
+        callback({ success: false, error: err.message });
+      }
+    }
+  });
+
+  // Quick Match: Join existing open room or create a new public room
+  socket.on('quick_match', ({ name, challengeId = 'auth' }, callback) => {
+    try {
+      let room = roomManager.findOpenRoom();
+      const playerId = `usr-${socket.id.substring(0, 5)}`;
+
+      if (room) {
+        const player = {
+          id: playerId,
+          name: name || `Engineer ${room.players.length + 1}`,
+          socketId: socket.id
+        };
+        room.addPlayer(player);
+        socket.join(room.roomId);
+        socket.data.roomId = room.roomId;
+        socket.data.playerId = playerId;
+
+        console.log(`[Quick Match Joined] ${player.name} joined ${room.roomId}`);
+        if (typeof callback === 'function') {
+          callback({ success: true, roomId: room.roomId, player });
+        }
+        broadcastRoomState(room);
+      } else {
+        const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const hostPlayer = {
+          id: playerId,
+          name: name || 'Lead Engineer',
+          socketId: socket.id
+        };
+        const newRoom = roomManager.createRoom(roomId, hostPlayer, challengeId, io);
+        socket.join(roomId);
+        socket.data.roomId = roomId;
+        socket.data.playerId = playerId;
+
+        newRoom.onStateChange(() => {
+          broadcastRoomState(newRoom);
+        });
+
+        console.log(`[Quick Match Created] ${roomId} by ${hostPlayer.name}`);
+        if (typeof callback === 'function') {
+          callback({ success: true, roomId, player: hostPlayer });
+        }
+        broadcastRoomState(newRoom);
+      }
+    } catch (err) {
+      console.error('[quick_match error]', err);
       if (typeof callback === 'function') {
         callback({ success: false, error: err.message });
       }
@@ -132,6 +184,14 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Manually add NPC teammate to room
+  socket.on('add_npc', ({ roomId }) => {
+    const room = roomManager.getRoom(roomId);
+    if (!room) return;
+    room.addNpcManual();
+    broadcastRoomState(room);
+  });
+
   // Switch challenge
   socket.on('select_challenge', ({ roomId, challengeId }) => {
     const room = roomManager.getRoom(roomId);
@@ -144,7 +204,6 @@ io.on('connection', (socket) => {
   socket.on('start_game', ({ roomId, durationSeconds = 480 }) => {
     const room = roomManager.getRoom(roomId);
     if (!room) return;
-    // Any player or host can trigger start in hackathon/demo
     console.log(`[Game Starting] Room ${roomId} for ${room.players.length} players`);
     room.startGame(durationSeconds);
     broadcastRoomState(room);
@@ -248,15 +307,15 @@ io.on('connection', (socket) => {
       const room = roomManager.getRoom(roomId);
       if (room) {
         room.removePlayer(socket.id);
-        if (room.players.length === 0) {
-          // Clean up empty room after 2 minutes
+        if (room.players.filter(p => !p.isNpc).length === 0) {
+          // If all humans left, clean up after 1 minute
           setTimeout(() => {
             const r = roomManager.getRoom(roomId);
-            if (r && r.players.length === 0) {
+            if (r && r.players.filter(p => !p.isNpc).length === 0) {
               roomManager.removeRoom(roomId);
               console.log(`[Room Cleaned Up] ${roomId}`);
             }
-          }, 120000);
+          }, 60000);
         } else {
           broadcastRoomState(room);
         }

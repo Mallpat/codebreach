@@ -147,6 +147,29 @@ export function useSocket() {
     }
   }, [gameState?.roomId]);
 
+  const quickMatch = useCallback(({ name, challengeId = 'auth' }) => {
+    return new Promise((resolve) => {
+      if (!socketRef.current) return resolve({ success: false, error: 'Socket not ready' });
+      localStorage.setItem('codebreach_name', name);
+      setMyName(name);
+
+      socketRef.current.emit('quick_match', { name, challengeId }, (res) => {
+        if (res.success) {
+          setMyId(res.player.id);
+          sound.playClick();
+        }
+        resolve(res);
+      });
+    });
+  }, []);
+
+  const addNpc = useCallback(() => {
+    if (socketRef.current && gameState?.roomId) {
+      sound.playClick();
+      socketRef.current.emit('add_npc', { roomId: gameState.roomId });
+    }
+  }, [gameState?.roomId]);
+
   const resetToLobby = useCallback(() => {
     if (socketRef.current && gameState?.roomId) {
       sound.playClick();
@@ -165,6 +188,8 @@ export function useSocket() {
     socket: socketRef.current,
     createRoom,
     joinRoom,
+    quickMatch,
+    addNpc,
     selectChallenge,
     startGame,
     sendCodeChange,

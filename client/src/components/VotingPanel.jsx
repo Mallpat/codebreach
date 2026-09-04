@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Vote, Shield, Bug, UserX, Clock, CheckCircle2, User, FileCode } from 'lucide-react';
+import { AlertTriangle, Vote, Shield, Bug, UserX, Clock, CheckCircle2, User, FileCode, Bot } from 'lucide-react';
 import { sound } from '../utils/audio';
 
 export function VotingPanel({
@@ -97,9 +97,11 @@ export function VotingPanel({
                         ? 'bg-slate-800 text-slate-500' 
                         : isMe 
                         ? 'bg-indigo-600 text-white' 
+                        : player.isNpc
+                        ? 'bg-cyan-950 border border-cyan-500/40 text-cyan-300'
                         : 'bg-slate-800 text-slate-200'
                     }`}>
-                      {player.name.slice(0, 2).toUpperCase()}
+                      {player.isNpc ? <Bot className="w-5 h-5 text-cyan-400" /> : player.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
@@ -107,9 +109,12 @@ export function VotingPanel({
                         {isMe && (
                           <span className="text-[10px] font-mono px-1 rounded bg-indigo-500/20 text-indigo-300">YOU</span>
                         )}
+                        {player.isNpc && (
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">AI</span>
+                        )}
                       </div>
                       <span className={`text-[11px] font-mono ${isAlive ? 'text-emerald-400' : 'text-slate-500 line-through'}`}>
-                        {isAlive ? 'Active Teammate' : 'Eliminated'}
+                        {isAlive ? (player.isNpc ? 'AI Teammate' : 'Active Teammate') : 'Eliminated'}
                       </span>
                     </div>
                   </div>

@@ -16,7 +16,8 @@ import {
   Users, 
   Code2, 
   Radio,
-  Flame
+  Flame,
+  Zap
 } from 'lucide-react';
 import { sound } from './utils/audio';
 
@@ -31,6 +32,8 @@ export default function App() {
     testNotification,
     createRoom,
     joinRoom,
+    quickMatch,
+    addNpc,
     selectChallenge,
     startGame,
     sendCodeChange,
@@ -45,7 +48,23 @@ export default function App() {
   const [roomInput, setRoomInput] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [isMatching, setIsMatching] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const handleQuickMatch = async (e) => {
+    e?.preventDefault();
+    if (!nameInput.trim()) {
+      setErrorMessage('Please enter your developer callsign / name');
+      return;
+    }
+    setErrorMessage('');
+    setIsMatching(true);
+    const res = await quickMatch({ name: nameInput.trim() });
+    setIsMatching(false);
+    if (!res.success) {
+      setErrorMessage(res.error || 'Matchmaking failed');
+    }
+  };
 
   // Role reveal modal auto-triggers when role is first assigned
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -136,6 +155,8 @@ export default function App() {
               isHost={isHost}
               challengeId={gameState.challengeId}
               onSelectChallenge={selectChallenge}
+              autoFillCountdown={gameState.autoFillCountdown}
+              onAddNpc={addNpc}
             />
           )}
 
@@ -314,23 +335,33 @@ export default function App() {
                   />
                 </div>
 
+                {/* Quick Match Action */}
+                <button
+                  onClick={handleQuickMatch}
+                  disabled={isMatching}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-heading font-black text-sm tracking-wider uppercase shadow-xl hover:shadow-cyan-500/25 transition-all cursor-pointer flex items-center justify-center gap-2.5 group"
+                >
+                  <Zap className="w-4 h-4 text-amber-300 fill-amber-300 group-hover:scale-125 transition-transform" />
+                  <span>{isMatching ? 'FINDING SQUAD...' : '⚡ QUICK MATCH (15s Auto-Fill)'}</span>
+                </button>
+
                 {/* Create Room Action */}
                 <button
                   onClick={handleCreateRoom}
                   disabled={isCreating}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-heading font-black text-sm tracking-wider uppercase shadow-xl hover:shadow-2xl transition-all cursor-pointer flex items-center justify-center gap-2 group"
+                  className="w-full py-3 rounded-xl bg-slate-900/90 hover:bg-slate-850 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-600 font-heading font-bold text-xs tracking-wider uppercase transition-all cursor-pointer flex items-center justify-center gap-2 group"
                 >
-                  <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                  <span>{isCreating ? 'CREATING ROOM...' : 'CREATE NEW INCIDENT ROOM'}</span>
+                  <Sparkles className="w-3.5 h-3.5 text-rose-400 group-hover:rotate-12 transition-transform" />
+                  <span>{isCreating ? 'CREATING ROOM...' : 'CREATE PRIVATE INCIDENT ROOM'}</span>
                 </button>
 
                 {/* Divider */}
-                <div className="relative my-4">
+                <div className="relative my-3">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-slate-800" />
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase font-mono">
-                    <span className="bg-[#0f1420] px-3 text-slate-500">OR JOIN EXISTING ROOM</span>
+                  <div className="relative flex justify-center text-[10px] uppercase font-mono">
+                    <span className="bg-[#0f1420] px-3 text-slate-500">OR ENTER ROOM CODE</span>
                   </div>
                 </div>
 

@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   User,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Bot
 } from 'lucide-react';
 import { sound } from '../utils/audio';
 
@@ -126,12 +127,17 @@ export function PostmortemScreen({
                 }`}
               >
                 <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center font-mono font-bold text-xl mb-3 shadow-md ${
-                  isSab ? 'bg-rose-600 text-white' : 'bg-slate-800 text-cyan-300'
+                  isSab ? 'bg-rose-600 text-white' : p.isNpc ? 'bg-cyan-950 border border-cyan-500/50 text-cyan-300' : 'bg-slate-800 text-cyan-300'
                 }`}>
-                  {p.name.slice(0, 2).toUpperCase()}
+                  {p.isNpc ? <Bot className="w-8 h-8 text-cyan-400" /> : p.name.slice(0, 2).toUpperCase()}
                 </div>
 
-                <h4 className="font-heading font-bold text-base text-white">{p.name}</h4>
+                <div className="flex items-center justify-center gap-1.5">
+                  <h4 className="font-heading font-bold text-base text-white">{p.name}</h4>
+                  {p.isNpc && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">AI</span>
+                  )}
+                </div>
 
                 <div className="mt-2">
                   <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-mono font-bold border ${
